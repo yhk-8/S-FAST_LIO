@@ -2,10 +2,9 @@ cmake_minimum_required(VERSION 2.8.3)
 project(sfast_lio)
 
 SET(CMAKE_BUILD_TYPE "Debug")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-ADD_COMPILE_OPTIONS(-std=c++14 )
-ADD_COMPILE_OPTIONS(-std=c++14 )
-set( CMAKE_CXX_FLAGS "-std=c++14 -O3" )
+add_compile_options(-pthread)
 
 add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\")
 
@@ -13,7 +12,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions" )
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -pthread -std=c++0x -std=c++14 -fexceptions")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
 
 message("Current CPU archtecture: ${CMAKE_SYSTEM_PROCESSOR}")
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
@@ -57,6 +56,15 @@ find_package(Eigen3 REQUIRED)
 find_package(PCL 1.8 REQUIRED)
 find_package( Sophus REQUIRED )
 
+# The old Sophus package used by this project does not always populate
+# Sophus_LIBRARIES. Find the actual shared library explicitly so that the
+# Sophus::SO3 symbols are available at link time.
+find_library(SOPHUS_LIBRARY
+  NAMES Sophus sophus
+  PATHS /usr/local/lib /usr/lib
+  REQUIRED
+)
+
 message(Eigen: ${EIGEN3_INCLUDE_DIR})
 
 include_directories(
@@ -83,10 +91,10 @@ catkin_package(
   INCLUDE_DIRS
 )
 
-add_executable(fastlio_mapping src/laserMapping.cpp include/ikd-Tree/ikd_Tree.cpp src/preprocess.cpp)
-target_link_libraries(fastlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${Sophus_LIBRARIES})
-target_include_directories(fastlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
+add_executable(s_fastlio_mapping src/laserMapping.cpp include/ikd-Tree/ikd_Tree.cpp src/preprocess.cpp)
+target_link_libraries(s_fastlio_mapping ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${SOPHUS_LIBRARY})
+target_include_directories(s_fastlio_mapping PRIVATE ${PYTHON_INCLUDE_DIRS})
 
 add_executable(fastlio_mapping_re src/laserMapping_re.cpp include/ikd-Tree/ikd_Tree.cpp src/preprocess.cpp)
-target_link_libraries(fastlio_mapping_re ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${Sophus_LIBRARIES})
+target_link_libraries(fastlio_mapping_re ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${SOPHUS_LIBRARY})
 target_include_directories(fastlio_mapping_re PRIVATE ${PYTHON_INCLUDE_DIRS})
